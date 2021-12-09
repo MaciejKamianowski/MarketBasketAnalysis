@@ -5,17 +5,24 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * @author maciejkamianowski
+ *
+ */
 public class MarketBasketAnalysis {
 	private List<List<String>> dataToAnalyse;
 	private List<String> uniqueItemList;
 	private long numberOfTransactions;
-	
+
+	/**
+	 * @param shoppingOrderList
+	 * @param separator
+	 */
 	public MarketBasketAnalysis(List<String> shoppingOrderList, String separator) {
 		validate(shoppingOrderList, separator);
 		dataToAnalyse = getSeparatedData(shoppingOrderList, separator);
 		numberOfTransactions = (long) dataToAnalyse.size();
-		uniqueItemList = dataToAnalyse.stream().flatMap(List::stream).distinct()
-				.collect(Collectors.toList());
+		uniqueItemList = dataToAnalyse.stream().flatMap(List::stream).distinct().collect(Collectors.toList());
 	}
 
 	public void runApriori() {
@@ -29,7 +36,45 @@ public class MarketBasketAnalysis {
 			System.out.println();
 		}
 //		calculate confidence item1 -> item2
-		
+//		A, B, C, E, Z
+//		
+//		A -> B, A -> C, A -> E, A -> Z
+//		B -> A, B -> C, B -> E, B -> Z
+//		C -> A, C -> B, C -> E, C -> Z
+//		E -> A, E -> B, E -> C, E -> Z
+//		Z -> A, Z -> B, Z -> C, Z -> E
+		for (var itemFirst : uniqueItemList) {
+			for (var itemSecond : uniqueItemList) {
+				if (!itemFirst.equals(itemSecond)) {
+					double confidence = calculateConfidence(itemFirst, itemSecond);
+					System.out.println("Confidence " + itemFirst + " -> " + itemSecond + " is equal to " + confidence);
+				}
+			}
+		}
+	}
+
+	/**
+	 * @param itemFirst
+	 * @param itemSecond
+	 * @return
+	 */
+	private double calculateConfidence(String itemFirst, String itemSecond) {
+		double confidence = 0.0;
+		if (itemFirst != null && itemSecond != null) {
+//			calculate transactions with both items
+			long howManyTimesBothItemsAppear = 0;
+			long howManyTimesFirstItemAppear = 0;
+			for (var itemList : dataToAnalyse) {
+				if (itemList.contains(itemFirst)) {
+					howManyTimesFirstItemAppear++;
+					if (itemList.contains(itemSecond)) {
+						howManyTimesBothItemsAppear++;
+					}
+				}
+			}
+			confidence = (double) howManyTimesBothItemsAppear / howManyTimesFirstItemAppear;
+		}
+		return confidence;
 	}
 
 	private double calculateSupport(String item) {
@@ -38,17 +83,16 @@ public class MarketBasketAnalysis {
 			long howManyTimes = 0;
 			for (var transactionItemsList : dataToAnalyse) {
 				boolean listContainsItem = false;
-				if (!listContainsItem && transactionItemsList.contains(item) ) {
+				if (!listContainsItem && transactionItemsList.contains(item)) {
 					howManyTimes++;
 					listContainsItem = true;
 				}
 			}
-			support = (double)howManyTimes / (double)numberOfTransactions;
+			support = (double) howManyTimes / (double) numberOfTransactions;
 		}
 		return support;
 	}
-	
-	
+
 	public void showData() {
 		for (var nestedList : dataToAnalyse) {
 			for (var item : nestedList) {
