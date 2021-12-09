@@ -28,4 +28,17 @@ public class MarketBasketAnalysisTest {
 		assertThat(thrown).isInstanceOf(NullPointerException.class);
 	}
 
+	@Test
+	void should_Throw_IllegalArgumentException_When_List_Is_Empty() {
+		// given
+		ArrayList<String> arrayList = new ArrayList<>();
+		String separator = ",";
+		// when
+		Throwable thrown = catchThrowable(() -> {
+			new MarketBasketAnalysis(arrayList, separator);
+		});
+		// then
+		assertThat(thrown).isInstanceOf(IllegalArgumentException.class);
+	}
+	
 }
